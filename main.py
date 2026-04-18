@@ -1,12 +1,25 @@
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import pandas as pd
 
 app = FastAPI()
 
+# 1. ADD CORS MIDDLEWARE (Crucial for Netlify -> Render communication)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins for now
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Load your Random Forest model
-model = joblib.load('heart_disease_model.pkl')
+# Note: Ensure the .pkl file is in the same directory as this main.py on GitHub
+try:
+    model = joblib.load('heart_disease_model.pkl')
+except Exception as e:
+    print(f"Error loading model: {e}")
 
 @app.post("/predict")
 async def predict(
@@ -27,12 +40,21 @@ async def predict(
     alert_class = "alert-danger" if prediction == 1 else "alert-success"
 
     return HTMLResponse(content=f"""
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <div class="container mt-5 text-center">
-            <div class="alert {alert_class} p-5 shadow">
-                <h1>{result_text}</h1>
-                <hr>
-                <a href="http://127.0.0.1:5500/frontend/index.html" class="btn btn-outline-dark">Analyze Another Patient</a>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <title>Diagnostic Result</title>
+        </head>
+        <body class="bg-light">
+            <div class="container mt-5 text-center">
+                <div class="alert {alert_class} p-5 shadow">
+                    <h1 class="display-4 fw-bold">{result_text}</h1>
+                    <hr>
+                    <p class="lead">The analysis is based on the machine learning model's prediction.</p>
+                    <a href="https://sparkling-sherbet-fa7764.netlify.app" class="btn btn-dark btn-lg mt-3">Analyze Another Patient</a>
+                </div>
             </div>
-        </div>
+        </body>
+        </html>
     """)
