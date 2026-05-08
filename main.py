@@ -6,16 +6,15 @@ import pandas as pd
 
 app = FastAPI()
 
-# 1. ADD CORS MIDDLEWARE (Crucial for Netlify -> Render communication)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for now
+    allow_origins=["*"],  
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load your Random Forest model
-# Note: Ensure the .pkl file is in the same directory as this main.py on GitHub
+
 try:
     model = joblib.load('heart_disease_model.pkl')
 except Exception as e:
@@ -29,13 +28,13 @@ async def predict(
     oldpeak: float = Form(...), slope: int = Form(...), ca: int = Form(...),
     thal: int = Form(...)
 ):
-    # Prepare data for prediction
+    
     data = [[age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal]]
     df = pd.DataFrame(data, columns=['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal'])
     
     prediction = model.predict(df)[0]
     
-    # Bootstrap styled response page
+    
     result_text = "Heart Disease Detected (High Risk)" if prediction == 1 else "No Heart Disease Detected (Low Risk)"
     alert_class = "alert-danger" if prediction == 1 else "alert-success"
 
